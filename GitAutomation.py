@@ -11,50 +11,42 @@ def run_command(command):
             encoding='utf-8', 
             errors='replace'
         )
-        # We return both the output and the error code
-        return result.stdout.strip(), result.returncode, result.stderr
-    except Exception as e:
-        return "", 1, str(e)
+        return result.stdout.strip(), result.returncode
+    except Exception:
+        return "", 1
 
 def automate_git():
-    print("Checking for changes...")
+    print("Checking changes...")
     subprocess.run("git add .", shell=True)
     
-    diff_changes, code, err = run_command("git diff --cached")
+    # We use --stat to get just the file names and number of lines changed.
+    # This is MUCH smaller than a full diff, making the prompt faster.
+    diff_stat, code = run_command("git diff --cached --stat")
     
-    if not diff_changes:
-        print("No changes detected. Nothing to commit.")
+    if not diff_stat:
+        print("No changes found.")
         return
 
-    print("Generating commit message via Gemini...")
-    prompt = f"Summarize these changes in one short sentence: {diff_changes[:1500]}"
+    print("Requesting 1-sentence summary...")
     
-    # Try to get message from Gemini
-    gemini_output, code, err = run_command(f'gemini --prompt "{prompt}"')
+    # Keeping the prompt extremely short to reduce processing time
+    prompt = f"Write a 5-word commit message for these files: {diff_stat}"
+    
+    # Using the -p flag for non-interactive mode as you requested
+    output, code = run_command(f'gemini -p "{prompt}"')
 
-    # If Gemini fails (Error 429 or any other error)
-    if code != 0 or "error" in gemini_output.lower() or not gemini_output:
-        print("\n[!] Gemini is currently unavailable (Rate limited or Server busy).")
-        commit_message = input("Please enter a manual commit message: ").strip()
+    # Logic to handle if Gemini is slow or failing
+    if code != 0 or not output:
+        commit_msg = input("Gemini failed. Enter message manually: ")
     else:
-        # Clean the output in case Gemini CLI includes headers/logs
-        # Usually, we want the last line of the output if it's chatty
-        commit_message = gemini_output.split('\n')[-1].replace('"', '').strip()
-        print(f"Gemini suggested: {commit_message}")
-        confirm = input("Use this message? (y/n): ").lower()
-        if confirm != 'y':
-            commit_message = input("Enter manual message: ").strip()
-
-    if not commit_message:
-        print("Commit cancelled.")
-        return
-
-    # Commit and Push
-    print(f"Committing: {commit_message}")
-    subprocess.run(f'git commit -m "{commit_message}"', shell=True)
-    
-    print("Pushing to GitHub...")
-    subprocess.run("git push origin main", shell=True) 
+        # Get only the last line (ignores the 'Loaded credentials' logs)
+        commit_msg = output.split('\n')[-1].strip()
+        print(f"Suggested: {commit_msg}")
+        
+    if commit_msg:
+        subprocess.run(f'git commit -m "{commit_msg}"', shell=True)
+        print("Pushing...")
+        subprocess.run("git push origin main", shell=True)
 
 if __name__ == "__main__":
     automate_git()
