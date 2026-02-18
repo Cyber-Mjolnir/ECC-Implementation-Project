@@ -1,10 +1,11 @@
 # ECC-Implementation-Project" 
 ## CSePS: Cryptographically Secure Government e-Procurement System
 
-**CSePS** is a distributed, high-security e-tendering system designed to ensure fairness, transparency, and data integrity in government procurement. This project addresses the **CIA Triad** (Confidentiality, Integrity, and Availability) using advanced cryptographic primitives.
+**CSePS** is A mini system that uses ECC cryptography, digital signatures, timestamping, and hashing toguarantee bid integrity, bidder anonymity (until deadline), non-repudiation, and verifiablefairness in a procurement process.
+
+
 
 ---
-
 
 ## 🏗️ Project Structure
 
