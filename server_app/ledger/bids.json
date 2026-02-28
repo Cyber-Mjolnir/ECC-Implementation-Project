@@ -1,0 +1,93 @@
+{
+    "chain": [
+        {
+            "hash": "f089260b179e2e955c9f558037f1ff88567b04486f38b8f66a94d31050cb9e45",
+            "block": {
+                "prev_hash": "GENESIS_HASH_0000000000000000000",
+                "bid_data": {
+                    "tender_id": "789",
+                    "encrypted_payload": {
+                        "eph_pub": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEtFRLnNkBvoQWtWY/vWs7D9lIFh0+kvjf\n0Dc/KaBOVYq9F+j49mmLzTm72zPTszohMimaaDTDof9ZAdDT0lbafw==\n-----END PUBLIC KEY-----\n",
+                        "nonce": "8CjdyDJxu/6I0VXr",
+                        "ciphertext": "rzWcevQE6hmfKgHPmVnUvM17wOhgWQaKmnenKr4nMbo9vGZcl1ClfD0I4ZEIt48CbN478w=="
+                    }
+                },
+                "zkp_proof": {
+                    "commitment": "07489b447525a08abc7f074a2c2915f4d0edbc3d5f4a7c96c7e51b43944dafd7",
+                    "proof": "f1ad599f4684538c2c5191ab136313f03ca1e9d01df501ea55a1cb33d1bc6550",
+                    "min_val": 1000,
+                    "max_val": 1000000
+                },
+                "signature": "3046022100d467a599f82b53cc4b5ff070460f872ef73eaa4e3e7526202e4444db0a269c2c022100f2d0eef00a52bc3becc07996c07d4fc362fc3166d32a4577b79ec49425c60695",
+                "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEfwHkWR5VatOtcVoyzzbYIFA1czrgofLdg2T8JAnuNaPL\n5oOXm97/SsPu4XqgzJOV+sXBpOo3zVMCPnw0oIfR0Q==\n-----END PUBLIC KEY-----\n"
+            }
+        },
+        {
+            "hash": "e90647251687e6e91623119f7de77229bfcceaec2d2cdcee3d08e915696bd4c8",
+            "block": {
+                "prev_hash": "f089260b179e2e955c9f558037f1ff88567b04486f38b8f66a94d31050cb9e45",
+                "bid_data": {
+                    "tender_id": "789",
+                    "encrypted_payload": {
+                        "eph_pub": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE48U+9xR+r9Mk5drbdZJ9OSiNOm66q9B1\nkjopQPZVuLGEDEpv6XGkjQVsMBuddsEz10Y/rGTczlLqMmpiHdZikg==\n-----END PUBLIC KEY-----\n",
+                        "nonce": "m3ZgbGHD5Tnm0n/d",
+                        "ciphertext": "YKTsj92rZMZOcjO6YzA+57jamtt6Hwqj5r0knj22wPsgwhs9nRJ6aajiElp3LXr03489mvU="
+                    }
+                },
+                "zkp_proof": {
+                    "commitment": "dc1612bd384ffae153f03503cff780aec4bf9e4366bfa398465af3d32fa00959",
+                    "proof": "25ea9cbb499e60a2670688340903a5d7fcdaaa598688b988e470a88ad8b5bb30",
+                    "min_val": 1000,
+                    "max_val": 1000000
+                },
+                "signature": "304502204042871dc7eba9d7b68ed912a29b6f41d23f7cb7934e04591d839193b83c5028022100fb241f75ef8d3c2e76ecb7fc771a8bfcde22d643432b1c11f3488834b43a4ef2",
+                "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEfwHkWR5VatOtcVoyzzbYIFA1czrgofLdg2T8JAnuNaPL\n5oOXm97/SsPu4XqgzJOV+sXBpOo3zVMCPnw0oIfR0Q==\n-----END PUBLIC KEY-----\n"
+            }
+        },
+        {
+            "hash": "7069d4372ce78ddde0afbb3dd8fe341b4f0ef8627317be457b5b53db443d2652",
+            "block": {
+                "prev_hash": "e90647251687e6e91623119f7de77229bfcceaec2d2cdcee3d08e915696bd4c8",
+                "bid_data": {
+                    "tender_id": "45744",
+                    "encrypted_payload": {
+                        "eph_pub": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE32LcfwQPjr6nB0xadw6hCT1x8Oz0NeOp\n4i1yj4QnBkVP9RB0e1t/nkSljZAZMofbXsvyt8pVQJZ72/U+dEQ2Tg==\n-----END PUBLIC KEY-----\n",
+                        "nonce": "MG6fTkkNAF3oGG5t",
+                        "ciphertext": "skuXRlbUhK8Zkt2hBRS2H6B6xer5clF6PQwLoJPzCWJbVAPNAeiTED90ss9Txi2hohR5cIBY"
+                    }
+                },
+                "zkp_proof": {
+                    "commitment": "4081e7b0a7eb2df4fc93d5335fcfbe9c7f0fe5e2822c2af2014f9e0888f0b649",
+                    "proof": "17f5aa95b5357d4751837ca56744aba6d25fd3444ee33f858386483baed501ec",
+                    "min_val": 1000,
+                    "max_val": 1000000
+                },
+                "signature": "304502210085ff97a0e71ceee52b536ec8e96a1a8f61464b1e093df5652a0f5f3c3fe15fca0220654b656a5afc98c08088656824f19a0ca6c050b8f67b872ef0543ca225212d36",
+                "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEfwHkWR5VatOtcVoyzzbYIFA1czrgofLdg2T8JAnuNaPL\n5oOXm97/SsPu4XqgzJOV+sXBpOo3zVMCPnw0oIfR0Q==\n-----END PUBLIC KEY-----\n"
+            }
+        },
+        {
+            "hash": "dfb99d803343a34ef37c11331b022603f3410d006015e53210e671f180f967dd",
+            "block": {
+                "prev_hash": "7069d4372ce78ddde0afbb3dd8fe341b4f0ef8627317be457b5b53db443d2652",
+                "bid_data": {
+                    "tender_id": "7892574",
+                    "encrypted_payload": {
+                        "eph_pub": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEKym5X4VlYqFBucKdhUCY7tGTtoKZNdGR\ngd2GI1eM74oQJUtStAGiJUO6Cu6LJS16ENCOnsJ4G6u7gazU91e4xQ==\n-----END PUBLIC KEY-----\n",
+                        "nonce": "goVzuA6rx+R7lDqz",
+                        "ciphertext": "AEuNeztAMUrChMBX9UkS9P6HCoXfDbFRM9TlAH63eLtUWCfF/9hHPMppXmYcA8HfdiB7XOeqxKI="
+                    }
+                },
+                "zkp_proof": {
+                    "commitment": "75e1e63e70d961cd04b131c6ccdcc86f4574c67c0670daebf06fa7b296483865",
+                    "proof": "5ec69bcc66a04594270c16725783e2abd98d588f998835861868b11d032ae783",
+                    "min_val": 1000,
+                    "max_val": 1000000
+                },
+                "signature": "3045022100ff5bbc546cf2ea9ca71e4f717975b1735a095a3ccd2521e9bb0ad4cf6da0085302206de0a7771248a1b15a61f1744ee34fdde7227644121113f83e4b20aeb128548c",
+                "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEfwHkWR5VatOtcVoyzzbYIFA1czrgofLdg2T8JAnuNaPL\n5oOXm97/SsPu4XqgzJOV+sXBpOo3zVMCPnw0oIfR0Q==\n-----END PUBLIC KEY-----\n"
+            }
+        }
+    ],
+    "last_hash": "dfb99d803343a34ef37c11331b022603f3410d006015e53210e671f180f967dd"
+}
