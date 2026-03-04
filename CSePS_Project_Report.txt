@@ -1,0 +1,76 @@
+================================================================================
+          CSePS: Cryptographically Secure Government e-Procurement System
+                             PROJECT TECHNICAL REPORT
+================================================================================
+
+1. PROJECT OVERVIEW
+-------------------
+CSePS is a secure, distributed e-procurement prototype designed to ensure 
+bidder anonymity, bid integrity, and non-repudiation. It uses advanced 
+cryptographic techniques to prevent unauthorized access to sensitive data 
+at rest and in transit.
+
+2. RECENT IMPLEMENTATIONS & ENHANCEMENTS
+----------------------------------------
+During the recent development phase, the following features were added:
+
+* DUAL-CONSENSUS DECRYPTION: Bids can only be opened if >50% of bidders and 
+  >= 2/3 of the assigned officer committee release their decryption shares.
+* GLOBAL TRANSPORT SECURITY (ECIES): All network traffic between apps and the 
+  server is encrypted using ECIES. No plaintext (passwords, usernames, bids) 
+  ever travels "over the wire."
+* DATA INTEGRITY LOCKING: Sensitive JSON databases (like admin credentials) 
+  are protected by HMAC signatures and a secret System Pepper to prevent 
+  manual file tampering.
+* ADMIN ACCOUNTABILITY: Implemented a signed invitation system where admins 
+  use their private keys to issue officer tokens. Added tracking to see 
+  which admin invited which officer.
+* ENHANCED UX: Added double-password verification for all registration and 
+  credential update forms. Fixed UI truncation to show full 256-bit hashes.
+* MITM SIMULATION: Created a dedicated proxy tool to demonstrate that 
+  intercepted network traffic remains unreadable to attackers.
+
+3. FILE DESCRIPTIONS
+--------------------
+
+--- CORE MODULES (module/) ---
+* ecc_helper.py: The cryptographic engine. Handles ECC (SECP256k1) key 
+  generation, digital signatures, ECIES encryption/decryption, and 
+  Shamir's Secret Sharing (key splitting/reconstruction).
+* zkp_engine.py: Implements Zero-Knowledge Proofs (ZKP) for range 
+  verification. Allows bidders to prove their bid is within the valid 
+  tender range without revealing the actual amount.
+* networkCommunication.py: The client-side transport layer. Automatically 
+  wraps every request in an encrypted ECIES envelope before sending.
+* configuration.py: Centralized connection settings (Host/Port).
+* uiCMD.py & style.py: Handles console formatting and custom UI aesthetics.
+
+--- SERVER (server_app/) ---
+* primary_server.py: The "Brain" of the system. Manages the blockchain-like 
+  ledger, verifies ZKP proofs/signatures, handles threshold share 
+  distribution, and performs server-side ECIES decryption.
+* admins_details/: Secure storage for admin credentials and the server's 
+  persistent network identity keys.
+
+--- CLIENTS ---
+* bidder_app/main_bidder.py: Portal for bidders. Manages local ECC keys and 
+  allows secure bid submission and consensus share release.
+* officer_app/main_officer.py: Portal for Officers and Admins. Handles 
+  tender creation (with evaluator selection), bid evaluation, and 
+  administrative management of the system.
+
+--- SECURITY TOOLS (traffic_monitor/) ---
+* mitm_proxy.py: A Man-in-the-Middle simulation tool. It intercepts and logs 
+  network traffic to prove that all data is encrypted and unreadable.
+
+4. SECURITY STACK
+-----------------
+* Asymmetric Encryption: ECC (SECP256k1) / ECIES
+* Threshold Cryptography: Shamir's Secret Sharing (2-of-3 Officers + 50% Bidders)
+* Integrity: HMAC-SHA256 with Secret Pepper
+* Privacy: Zero-Knowledge Proofs (Range Proofs)
+* Immutability: Blockchain-linked Hash Ledger
+
+================================================================================
+REPORT GENERATED ON: 2026-03-05
+================================================================================

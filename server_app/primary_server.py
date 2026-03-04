@@ -23,6 +23,7 @@ SYSTEM_PEPPER = "SECURE_CSePS_PEPPER_2026_#$!"
 USER_DB = 'server_app/ledger/users.json'             # For Bidders
 OFFICER_DB = 'server_app/ledger/officers.json'       # For Registered Officers
 ADMIN_DB = 'server_app/admins_details/admin_credentials.json'     # For the Single Admin
+SERVER_KEY_PATH = 'server_app/admins_details/server_keys/' # Persistent Server Identity
 SECRET_KEY_DB = 'server_app/ledger/secret_keys.json' # For Officer Invitation Tokens
 TENDER_DB = 'server_app/ledger/tenders.json'         # For Published Tenders
 BIDS_DB = 'server_app/ledger/bids.json'              # For Secure Bid Blockchain
@@ -30,14 +31,29 @@ SHARES_DB = 'server_app/ledger/shares.json'          # For Threshold Key Shares
 CONSENSUS_DB = 'server_app/ledger/consensus.json'    # For Bidder Consensus tracking
 
 # Ensure the database directories and files exist
-for db_path in [USER_DB, OFFICER_DB, ADMIN_DB, SECRET_KEY_DB, TENDER_DB, BIDS_DB, SHARES_DB, CONSENSUS_DB]:
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
-    if not os.path.exists(db_path):
+for db_path in [USER_DB, OFFICER_DB, ADMIN_DB, SECRET_KEY_DB, TENDER_DB, BIDS_DB, SHARES_DB, CONSENSUS_DB, SERVER_KEY_PATH]:
+    os.makedirs(os.path.dirname(db_path) if not db_path.endswith('/') else db_path, exist_ok=True)
+    if not os.path.exists(db_path) and not db_path.endswith('/'):
         with open(db_path, 'w') as f:
             if "bids" in db_path:
                 json.dump({"chain": [], "last_hash": "GENESIS_HASH_0000000000000000000"}, f)
             else:
                 json.dump({}, f)
+
+# Initialize Server ECC Identity for Network Encryption
+_helper_init = ecc.ECCHelper()
+if not os.path.exists(os.path.join(SERVER_KEY_PATH, "private_key.pem")):
+    print("[System] Generating Server Network Identity Keys...")
+    _helper_init.generate_and_save_keys(SERVER_KEY_PATH, "SERVER_INTERNAL_SECRET_99")
+
+def get_server_keys():
+    h = ecc.ECCHelper()
+    priv = h.load_private_key(SERVER_KEY_PATH, "SERVER_INTERNAL_SECRET_99")
+    with open(os.path.join(SERVER_KEY_PATH, "public_key.pem"), "r") as f:
+        pub_pem = f.read()
+    return priv, pub_pem
+
+SERVER_PRIV, SERVER_PUB_PEM = get_server_keys()
 
 def hash_data(data):
     """Secure SHA-256 Hashing with System Pepper to prevent manual hashing/tampering."""
@@ -101,6 +117,37 @@ def save_json(path, data):
 
 def handle_auth(data):
     """Handles Bidder, Officer, and Admin Authentication Logic."""
+    # Special Unencrypted Action
+    if data.get("action") == "get_server_pubkey":
+        return {"status": "success", "pubkey": SERVER_PUB_PEM}
+
+    # --- NETWORK ENCRYPTION LAYER (ECIES WRAPPER) ---
+    if data.get("type") == "wrapped_request":
+        try:
+            encrypted_payload = data.get("payload")
+            client_pub = data.get("client_pub") # Used to encrypt the response back
+            
+            # Decrypt the request using Server Private Key
+            h = ecc.ECCHelper()
+            decrypted_bytes = h.decrypt_data(SERVER_PRIV, encrypted_payload)
+            if not decrypted_bytes:
+                return {"status": "error", "message": "Network Decryption Failed."}
+            
+            # Process the actual request
+            actual_request = json.loads(decrypted_bytes.decode('utf-8'))
+            response = handle_auth(actual_request) # Recursive call to internal logic
+            
+            # Encrypt the response using Client's Ephemeral Public Key
+            response_json = json.dumps(response).encode('utf-8')
+            encrypted_response = h.encrypt_data(client_pub, response_json)
+            
+            return {
+                "type": "wrapped_response",
+                "payload": encrypted_response
+            }
+        except Exception as e:
+            return {"status": "error", "message": f"Transport Security Error: {str(e)}"}
+
     role = data.get("role", "bidder") # Default to bidder if not specified
     action = data.get("action")
     username = data.get("username")
