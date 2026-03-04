@@ -1,0 +1,24 @@
+[
+    {
+        "tender_id": "001",
+        "blockchain_hash": "ee9315dafa2f7b242e8555f91260fe9dd1c88936e90a2abc9778124539f9357d",
+        "blinding_factor": "91705946439858116758000039391361574969000461213279974106492691545434068224008",
+        "decryption_share": {
+            "index": 1,
+            "data": "8AMYihHy4n5I0Iidn9UjYg=="
+        },
+        "timestamp": 1772651994.8312182,
+        "released": true
+    },
+    {
+        "tender_id": "002",
+        "blockchain_hash": "1e4b45f8ff9362196217ab08c129d7308112c7e96b30e03bf41ab5fe7062f816",
+        "blinding_factor": "52588546043184896793352932120995566597758239420341463001995114672106425254802",
+        "decryption_share": {
+            "index": 1,
+            "data": "VpzhIL756WptsvjwrvAthA=="
+        },
+        "timestamp": 1772652715.750397,
+        "released": true
+    }
+]

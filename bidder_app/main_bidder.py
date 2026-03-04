@@ -46,7 +46,8 @@ def main_menu():
     ).ask()
 
     if choice and 'Account' in choice:
-        mode = "SIGN UP" if 'Create' in choice else "LOGIN"
+        action = "signup" if 'Create' in choice else "login"
+        mode = "SIGN UP" if action == "signup" else "LOGIN"
         print(f"\n{indent}--- {mode} MODE ---")
         
         username = questionary.text(
@@ -60,13 +61,24 @@ def main_menu():
             style=custom_style,
             qmark=f"{indent}?"
         ).ask()
+
+        if action == "signup":
+            confirm_p = questionary.password(
+                "Confirm Password:",
+                style=custom_style,
+                qmark=f"{indent}?"
+            ).ask()
+            
+            if password != confirm_p:
+                print(f"\n{indent}❌ Error: Passwords do not match.")
+                time.sleep(1.5)
+                return
         
         if not username or not password:
             print(f"\n{indent}[!] Error: Fields cannot be empty.")
             time.sleep(1.5)
             return
 
-        action = "signup" if 'Create' in choice else "login"
         print(f"\n{indent}[*] Connecting to Primary Server...")
         result = network.send_request(action, username, password)
         
