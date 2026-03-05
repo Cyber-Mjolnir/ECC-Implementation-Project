@@ -43,7 +43,29 @@
                 "signature": "3046022100d8ccfc77b8d20a8552f7b798210b6bad32f93afd21b9a4fd833694fa24f66aec022100a61703d491427e346db0f71f9beb1f0ad5ef290b6731a7cc224ad02e55808a97",
                 "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAESs0ru+mRFLZXPLKji78plrGjJF6B2GvAALnfEdcng/iE\nDf1vJaM7QoQcGy+euDqFgUY6h8NBmzkmJ6STL8MZdw==\n-----END PUBLIC KEY-----\n"
             }
+        },
+        {
+            "hash": "79dc33f48bf9cb74a45433b9a633a580b88800cad43cb2db5e69926429bb24e7",
+            "block": {
+                "prev_hash": "1e4b45f8ff9362196217ab08c129d7308112c7e96b30e03bf41ab5fe7062f816",
+                "bid_data": {
+                    "tender_id": "124574",
+                    "encrypted_payload": {
+                        "eph_pub": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEhMMSu58EI7cdCPYLAFHTXVlSvKZUFcRt\nKzlbOA1efAx+8NQAbOa+lW67f2CzecuXYy+jivNiF0qOS9xf+K07ag==\n-----END PUBLIC KEY-----\n",
+                        "nonce": "SFCiyyqjmZmKuesX",
+                        "ciphertext": "hihrvuFhKxFpJelAr5gWRHP0ifVlLYPN1GLJ6jxJgIdFoaoeCBkBJvBJv9nQwCfttLI0IMXLdJs="
+                    }
+                },
+                "zkp_proof": {
+                    "commitment": "6b5c82b7371218e5a4c5be3ae6cc6150132e0e5be763da195999acfe12cb7a59",
+                    "proof": "f0b88cbc2e2040c26575dcbda4a7c0be4a69291e5f32175371a79342102af6e1",
+                    "min_val": 1000,
+                    "max_val": 1000000
+                },
+                "signature": "30440220580fdf5f2ddcbadb876f992a8963b02b7fc125bbcf5a2790eb384fa2a8a57dd102206cd7d754889be8801ad60370d5ea696d92ef55c75d4b3049925d689b1dccbdc4",
+                "bidder_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAESs0ru+mRFLZXPLKji78plrGjJF6B2GvAALnfEdcng/iE\nDf1vJaM7QoQcGy+euDqFgUY6h8NBmzkmJ6STL8MZdw==\n-----END PUBLIC KEY-----\n"
+            }
         }
     ],
-    "last_hash": "1e4b45f8ff9362196217ab08c129d7308112c7e96b30e03bf41ab5fe7062f816"
+    "last_hash": "79dc33f48bf9cb74a45433b9a633a580b88800cad43cb2db5e69926429bb24e7"
 }

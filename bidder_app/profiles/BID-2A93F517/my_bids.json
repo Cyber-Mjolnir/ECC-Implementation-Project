@@ -20,5 +20,16 @@
         },
         "timestamp": 1772652715.750397,
         "released": true
+    },
+    {
+        "tender_id": "124574",
+        "blockchain_hash": "79dc33f48bf9cb74a45433b9a633a580b88800cad43cb2db5e69926429bb24e7",
+        "blinding_factor": "113626571549678116392147337650687902532735120920107368702179045247128081824765",
+        "decryption_share": {
+            "index": 1,
+            "data": "hGs2vOwPpf6Gpf2ZB0wEyw=="
+        },
+        "timestamp": 1772730864.7008789,
+        "released": true
     }
 ]

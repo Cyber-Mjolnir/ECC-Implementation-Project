@@ -325,9 +325,203 @@ def officer_dashboard(username, password, officer_id):
             release_officer_consensus(officer_id, password)
         elif choice == '📊 View Submitted Bids':
             view_submitted_bids(officer_id, password)
+        elif choice == '⚖️  Evaluate & Close Tender':
+            evaluate_and_close_tender(officer_id, password)
         else:
             print(f"\n{indent}[Notice] {choice} requires ZKP Verification module.")
             input(f"\n{indent}Press Enter...")
+
+def evaluate_and_close_tender(officer_id, password):
+    ui.clear_console()
+    ui.center_print("⚖️  EVALUATE & CLOSE TENDER")
+    ui.center_print("="*45)
+
+    profile_path = os.path.join("officer_app", "profiles", officer_id)
+    helper = ecc.ECCHelper()
+    private_key = helper.load_private_key(profile_path, password)
+    
+    if not private_key:
+        print(f"\n{indent}❌ Error: Failed to load private key. Ensure you have generated it and your password is correct.")
+        input(f"\n{indent}Press Enter to return...")
+        return
+
+    print(f"\n{indent}[*] Fetching your tenders...")
+    req = {"role": "officer", "action": "fetch_tenders"}
+    res = network.send_request_raw(req)
+    if res.get("status") != "success" or not res.get("tenders"):
+        print(f"{indent}[!] No tenders found.")
+        input(f"\n{indent}Press Enter to return...")
+        return
+
+    # Only show OPEN tenders owned by this officer
+    my_tenders = {tid: tdata for tid, tdata in res["tenders"].items() 
+                  if tdata["data"]["officer_id"] == officer_id and tdata.get("status") == "OPEN"}
+    
+    if not my_tenders:
+        print(f"{indent}[!] You have no open tenders to evaluate.")
+        input(f"\n{indent}Press Enter to return...")
+        return
+
+    choices = [f"ID: {tid} | {tdata['data']['title']}" for tid, tdata in my_tenders.items()]
+    choices.append("❌ Cancel")
+    
+    selected = questionary.select(
+        f"{indent}Select a Tender to Evaluate & Close:",
+        choices=choices,
+        style=custom_style
+    ).ask()
+    
+    if selected == "❌ Cancel":
+        return
+        
+    tender_id = selected.split(" |")[0].replace("ID: ", "").strip()
+    
+    print(f"\n{indent}[*] Requesting Dual-Consensus Data for {tender_id}...")
+    req = {"role": "officer", "action": "fetch_bids", "tender_id": tender_id}
+    res = network.send_request_raw(req)
+    
+    if res.get("status") != "success":
+        print(f"\n{indent}❌ ACCESS DENIED: {res.get('message')}")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    bids = res.get("bids", [])
+    bidder_shares = res.get("bidder_shares", [])
+    officer_shares = res.get("officer_shares", [])
+    
+    if not bids:
+        print(f"{indent}[!] No bids found to evaluate.")
+        input(f"\n{indent}Press Enter to return...")
+        return
+
+    # --- 🏗️  RECONSTRUCT TENDER KEY (Dual-Consensus XOR Wrap) ---
+    import base64
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+    from cryptography.hazmat.primitives import serialization
+
+    print(f"{indent}[*] Reconstructing Master Key from Consensus Shares...")
+    mk_b = helper.reconstruct_tender_key(bidder_shares)
+    mk_o = helper.reconstruct_tender_key(officer_shares)
+    
+    if not mk_b or not mk_o:
+        print(f"{indent}❌ Error: Failed to reconstruct consensus components.")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    # Combine Components: Master_Key = MK_B ^ MK_O
+    master_key = bytes(a ^ b for a, b in zip(mk_b, mk_o))
+
+    # Decrypt the Wrapped Tender Key
+    wrapped = res.get("wrapped_tender_key")
+    if not wrapped:
+        print(f"{indent}❌ Error: No wrapped tender key found on server.")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    try:
+        aesgcm = AESGCM(master_key)
+        nonce = base64.b64decode(wrapped["nonce"])
+        ciphertext = base64.b64decode(wrapped["ciphertext"])
+        raw_tender_priv_bytes = aesgcm.decrypt(nonce, ciphertext, None)
+        
+        tender_private_key = serialization.load_der_private_key(
+            raw_tender_priv_bytes,
+            password=None
+        )
+    except Exception as e:
+        print(f"{indent}❌ Error: Failed to unwrap Tender Key: {str(e)}")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    print(f"\n{indent}--- 📜 DECRYPTING & VERIFYING BID BLOCKCHAIN ---")
+    
+    # --- 🔗 BLOCKCHAIN INTEGRITY CHECK ---
+    print(f"{indent}[*] Verifying Ledger Chain Integrity...")
+    ledger_valid = True
+    for i in range(1, len(bids)):
+        current_block = bids[i]["block"]
+        prev_hash_in_block = current_block.get("prev_hash")
+        actual_prev_hash = bids[i-1]["hash"]
+        
+        if prev_hash_in_block != actual_prev_hash:
+            print(f"{indent}❌ LEDGER ERROR: Chain broken at block {bids[i]['hash'][:16]}!")
+            ledger_valid = False
+            break
+    
+    if not ledger_valid:
+        print(f"{indent}❌ Error: Blockchain integrity compromised. Evaluation aborted.")
+        input(f"\n{indent}Press Enter...")
+        return
+    print(f"{indent}✅ Ledger Integrity Verified (Genesis to Tip)")
+
+    decrypted_bids = []
+    for b_wrap in bids:
+        block = b_wrap["block"]
+        bidder_id = block.get("bidder_id", "Unknown")
+        encrypted_payload = block["bid_data"]["encrypted_payload"]
+        
+        # Verify ZKP locally
+        import module.zkp_engine as zkp
+        engine = zkp.ZKPEngine()
+        is_valid_zkp = engine.verify_range_proof(block["zkp_proof"])
+        
+        status_icon = "✅" if is_valid_zkp else "❌"
+        print(f"{indent}🔗 Block: {b_wrap['hash'][:16]}... | ZKP: {status_icon}")
+
+        if not is_valid_zkp:
+            print(f"{indent}⚠️  Warning: Skipping bid from {bidder_id} due to invalid ZKP.")
+            continue
+
+        # Decrypt using the RECONSTRUCTED TENDER KEY
+        try:
+            decrypted_bytes = helper.decrypt_data(tender_private_key, encrypted_payload)
+            if decrypted_bytes:
+                decrypted_json = json.loads(decrypted_bytes.decode('utf-8'))
+                decrypted_bids.append({
+                    "bidder_id": bidder_id,
+                    "amount": float(decrypted_json['amount']),
+                    "hash": b_wrap["hash"]
+                })
+            else:
+                print(f"{indent}❌ Decryption failed for block {b_wrap['hash'][:8]}.")
+        except Exception as e:
+             print(f"{indent}❌ Decryption Error: {str(e)}")
+
+    if not decrypted_bids:
+        print(f"\n{indent}❌ No valid bids could be decrypted for evaluation.")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    # --- ⚖️  SORT AND EVALUATE ---
+    # Sort Bids by Amount (Minimum first as requested)
+    decrypted_bids.sort(key=lambda x: x['amount'])
+
+    print(f"\n{indent}{'BIDDER ID':<15} | {'AMOUNT':<10} | {'INTEGRITY'}")
+    print(f"{indent}{'-'*15}-+-{'-'*10}-+-{'-'*15}")
+    for b in decrypted_bids:
+        print(f"{indent}{b['bidder_id']:<15} | ${b['amount']:<9} | ✅ Verified Block")
+
+    winner = decrypted_bids[0]
+    print(f"\n{indent}🏆 Winning Candidate: {winner['bidder_id']} with lowest bid of ${winner['amount']}")
+    
+    confirm = questionary.confirm(f"{indent}Permanently close this tender and award to {winner['bidder_id']}?", default=True).ask()
+    
+    if confirm:
+        close_req = {
+            "role": "officer", "action": "close_tender",
+            "tender_id": tender_id, "officer_id": officer_id,
+            "winner_id": winner['bidder_id'], "winning_bid": winner['amount']
+        }
+        close_res = network.send_request_raw(close_req)
+        
+        if close_res.get("status") == "success":
+            print(f"\n{indent}✅ {close_res.get('message')}")
+        else:
+            print(f"\n{indent}❌ Server Error: {close_res.get('message')}")
+    else:
+        print(f"\n{indent}[!] Evaluation aborted. Tender remains OPEN.")
+
+    input(f"\n{indent}Press Enter to return...")
 
 def release_officer_consensus(officer_id, password):
     ui.clear_console()

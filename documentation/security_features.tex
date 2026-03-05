@@ -1,0 +1,76 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+
+% --- Custom Colors ---
+\definecolor{primary}{RGB}{33, 37, 41}
+\definecolor{secondary}{RGB}{108, 117, 125}
+\definecolor{header}{RGB}{0, 123, 255}
+
+% --- Header and Footer ---
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{CSePS Project Documentation}
+\lhead{Security Implementation}
+\rfoot{Page \thepage}
+
+% --- Title ---
+\title{
+    \vspace{2cm}
+    \textbf{\huge CSePS: Cryptographically Secure Government e-Procurement System} \\
+    \vspace{1cm}
+    \large Security Architecture and Implementation Report \\
+    \vspace{0.5cm}
+}
+\begin{document}
+
+\section{Introduction}
+The \textbf{CSePS (Cryptographically Secure Government e-Procurement System)} is designed to ensure the highest standards of security for digital bidding. It prioritizes bidder anonymity, data integrity, and decentralized trust using modern cryptographic protocols. This document outlines the core security features implemented in the system.
+
+\section{Security Implementation Overview}
+The system employs a multi-layered security stack, ranging from transport-level encryption to threshold-based consensus decryption. Below is a comprehensive table of the security techniques and their benefits.
+
+\begin{longtable}{>{\raggedright\arraybackslash}p{0.25\textwidth} >{\raggedright\arraybackslash}p{0.3\textwidth} >{\raggedright\arraybackslash}p{0.35\textwidth}}
+\caption{Security Features, Techniques, and Benefits} \\
+\toprule
+\textbf{Security Feature} & \textbf{Technique/Technology} & \textbf{Benefit (Why it is good)} \\
+\midrule
+\endhead
+
+\bottomrule
+\endfoot
+
+\textbf{Transport Layer Security} & ECIES (ECC SECP256k1 + AES-GCM) & Prevents eavesdropping and Man-in-the-Middle (MITM) attacks by encrypting all network traffic. No plaintext ever travels over the wire. \\ \midrule
+
+\textbf{User Authentication} & SHA-256 Hashing + System Pepper & Protects passwords from brute-force and rainbow table attacks even if the database is leaked. The secret pepper adds an extra layer of system-level defense. \\ \midrule
+
+\textbf{Bid Integrity \& Non-repudiation} & ECDSA Digital Signatures (SECP256k1) & Ensures bids cannot be modified after submission. Bidders cannot deny their submissions as they are signed with their unique private keys. \\ \midrule
+
+\textbf{Data Immutability} & Blockchain-linked Hash Ledger & Prevents unauthorized modification of the bid history through cryptographic linking of blocks. Any change in the ledger invalidates subsequent hashes. \\ \midrule
+
+\textbf{Bid Privacy (Range Proof)} & Zero-Knowledge Proofs (ZKP) - Range Commitment & Allows bidders to prove their bid is within a valid range without revealing the actual amount, maintaining privacy during the evaluation phase. \\ \midrule
+
+\textbf{Consensus Decryption} & Shamir's Secret Sharing (SSS) (2-of-3 Officers + 50\% Bidders) & Ensures bids can only be decrypted when a threshold of participants (Bidders/Officers) agree, preventing a single malicious actor from opening bids early. \\ \midrule
+
+\textbf{Database Integrity Locking} & HMAC-SHA256 Signatures + Secret Pepper & Detects and prevents manual tampering of sensitive JSON database files (like admin credentials). The server verifies the signature on every load. \\ \midrule
+
+\textbf{Key Protection (At Rest)} & PKCS\#8 + AES-256 Encryption & Safely stores ECC private keys on the local disk using user-provided passwords. Keys are only decrypted in memory during active sessions. \\ \midrule
+
+\textbf{Admin Accountability} & Signed Invitation System (ECDSA) & Tracks which administrator authorized which officer, preventing unauthorized access and ensuring a clear audit trail of system permissions. \\ \bottomrule
+\end{longtable}
+
+\section{Technical Summary}
+The project leverages the \textbf{SECP256k1} elliptic curve, the same standard used by Bitcoin and Ethereum, providing robust security with shorter key lengths compared to RSA. The implementation of \textbf{ECIES} ensures that the system is resistant to modern network-based attacks. Furthermore, the use of \textbf{Threshold Cryptography} ensures that no single entity has total control over the sensitive bidding data.
+
+\end{document}

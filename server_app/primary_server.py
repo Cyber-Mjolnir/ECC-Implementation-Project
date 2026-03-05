@@ -115,6 +115,77 @@ def save_json(path, data):
     if "admin_credentials" in path:
         sign_file(path)
 
+def verify_and_repair_chain():
+    """
+    Scans the blockchain for integrity. If a broken link is found, 
+    it prunes the invalid blocks and synchronizes the tenders and shares DBs.
+    """
+    print("[System] Running Blockchain Integrity Audit...")
+    bids_db = load_json(BIDS_DB)
+    tenders = load_json(TENDER_DB)
+    shares_db = load_json(SHARES_DB)
+    
+    chain = bids_db.get("chain", [])
+    if not chain:
+        return
+
+    valid_until_index = -1
+    last_known_hash = "GENESIS_HASH_0000000000000000000"
+    
+    for i, block_wrapper in enumerate(chain):
+        block = block_wrapper["block"]
+        actual_hash = block_wrapper["hash"]
+        
+        # 1. Verify Hash of the block itself (Optional but good)
+        block_json = json.dumps(block, sort_keys=True)
+        recalculated_hash = hashlib.sha256(block_json.encode()).hexdigest()
+        
+        # 2. Verify Linkage
+        if block.get("prev_hash") != last_known_hash or recalculated_hash != actual_hash:
+            print(f"[SECURITY] Integrity Breach detected at block index {i}!")
+            print(f"[*] Block Hash: {actual_hash[:16]}... | Expected Prev: {last_known_hash[:16]}...")
+            valid_until_index = i
+            break
+        
+        last_known_hash = actual_hash
+
+    if valid_until_index != -1:
+        print(f"[System] Self-Healing Protocol Initiated: Pruning chain from index {valid_until_index}...")
+        
+        # Identify bids being removed to update counts and shares
+        removed_blocks = chain[valid_until_index:]
+        pruned_chain = chain[:valid_until_index]
+        
+        for b_wrap in removed_blocks:
+            bid_data = b_wrap["block"].get("bid_data", {})
+            t_id = bid_data.get("tender_id")
+            bidder_id = b_wrap["block"].get("bidder_id") # Use our new field
+            
+            # Decrement bidder count
+            if t_id in tenders:
+                if tenders[t_id].get("bidder_count", 0) > 0:
+                    tenders[t_id]["bidder_count"] -= 1
+            
+            # Restore share to pool
+            if t_id in shares_db and bidder_id:
+                pool = shares_db[t_id]
+                if "bidder_assigned" in pool and bidder_id in pool["bidder_assigned"]:
+                    share = pool["bidder_assigned"].pop(bidder_id)
+                    pool.setdefault("bidder_pool", []).insert(0, share) # Put it back at the front
+                    # Also remove from released if it was there
+                    pool["bidder_released"] = [s for s in pool.get("bidder_released", []) if s["index"] != share["index"]]
+
+        # Save corrected states
+        bids_db["chain"] = pruned_chain
+        bids_db["last_hash"] = pruned_chain[-1]["hash"] if pruned_chain else "GENESIS_HASH_0000000000000000000"
+        
+        save_json(BIDS_DB, bids_db)
+        save_json(TENDER_DB, tenders)
+        save_json(SHARES_DB, shares_db)
+        print("[System] Blockchain Integrity Restored. (Credentials Unaffected)")
+    else:
+        print("[System] Blockchain Integrity Verified. No issues found.")
+
 def handle_auth(data):
     """Handles Bidder, Officer, and Admin Authentication Logic."""
     # Special Unencrypted Action
@@ -175,6 +246,11 @@ def handle_auth(data):
             tenders = load_json(TENDER_DB)
             return {"status": "success", "tenders": tenders}
 
+        elif action == "fetch_ledger":
+            bids_db = load_json(BIDS_DB)
+            # Return the chain for public auditing. Payloads remain encrypted.
+            return {"status": "success", "chain": bids_db.get("chain", []), "last_hash": bids_db.get("last_hash")}
+
         elif action == "submit_bid":
             bid_data = data.get("bid_data")
             zkp_proof = data.get("zkp_proof")
@@ -186,6 +262,13 @@ def handle_auth(data):
             if not all([bid_data, zkp_proof, signature, public_key, bidder_id, tender_id]):
                 return {"status": "error", "message": "Missing required bid parameters."}
             
+            # Check Tender Status
+            tenders = load_json(TENDER_DB)
+            if tender_id not in tenders:
+                return {"status": "error", "message": "Tender not found."}
+            if tenders[tender_id].get("status") != "OPEN":
+                return {"status": "error", "message": "Tender is closed for bidding."}
+
             # Verify ZKP Range Proof
             zkp_engine = zkp.ZKPEngine()
             if not zkp_engine.verify_range_proof(zkp_proof):
@@ -196,6 +279,9 @@ def handle_auth(data):
             bid_json = json.dumps(bid_data, sort_keys=True)
             if not helper.verify_signature(public_key, bid_json, signature):
                 return {"status": "error", "message": "Digital Signature Invalid!"}
+
+            # Blockchain: Verify and Repair before adding new block
+            verify_and_repair_chain()
 
             # ASSIGN DECRYPTION SHARE TO BIDDER
             shares_db = load_json(SHARES_DB)
@@ -226,6 +312,7 @@ def handle_auth(data):
             prev_hash = bids_db.get("last_hash", "GENESIS_HASH_0000000000000000000")
             block_content = {
                 "prev_hash": prev_hash,
+                "bidder_id": bidder_id,
                 "bid_data": bid_data,
                 "zkp_proof": zkp_proof,
                 "signature": signature,
@@ -238,7 +325,8 @@ def handle_auth(data):
             save_json(BIDS_DB, bids_db)
 
             # Update Tender Bidder Count
-            tenders = load_json(TENDER_DB)
+            # tenders = load_json(TENDER_DB) # Reloaded to ensure fresh count after potential repair
+            tenders = load_json(TENDER_DB) 
             if tender_id in tenders:
                 tenders[tender_id]["bidder_count"] = tenders[tender_id].get("bidder_count", 0) + 1
                 save_json(TENDER_DB, tenders)
@@ -514,6 +602,28 @@ def handle_auth(data):
                 "officer_consensus": True
             }
 
+        elif action == "close_tender":
+            tender_id = data.get("tender_id")
+            officer_id = data.get("officer_id")
+            winner_id = data.get("winner_id")
+            winning_bid = data.get("winning_bid")
+            
+            tenders = load_json(TENDER_DB)
+            if tender_id not in tenders:
+                return {"status": "error", "message": "Tender not found."}
+            
+            if tenders[tender_id]["data"]["officer_id"] != officer_id:
+                return {"status": "error", "message": "Unauthorized: Only the tender creator can close it."}
+            
+            tenders[tender_id]["status"] = "CLOSED"
+            tenders[tender_id]["winner"] = {
+                "bidder_id": winner_id,
+                "amount": winning_bid
+            }
+            save_json(TENDER_DB, tenders)
+            print(f"[Server] Tender {tender_id} CLOSED. Winner: {winner_id}")
+            return {"status": "success", "message": f"Tender {tender_id} successfully closed and awarded."}
+
     # --- ADMIN LOGIC (Token Generation & User Management) ---
     elif role == "admin":
         admins = load_json(ADMIN_DB)
@@ -638,6 +748,9 @@ def handle_auth(data):
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    
+    # Audit Blockchain on Startup
+    verify_and_repair_chain()
     
     try:
         server.bind((HOST, PORT))

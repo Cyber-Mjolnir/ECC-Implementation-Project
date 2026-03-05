@@ -1,7 +1,8 @@
 @echo off
 title Officer Application - Threshold Decryption
-:: Activate the virtual environment
-call venv\Scripts\activate
-:: Run the script
-python officer_app/main_officer.py
+:: Get the project root directory
+set "PROJECT_ROOT=%~dp0"
+cd /d "%PROJECT_ROOT%"
+:: Run the script using the local virtual environment's python directly
+"%PROJECT_ROOT%venv\Scripts\python.exe" officer_app/main_officer.py
 pause

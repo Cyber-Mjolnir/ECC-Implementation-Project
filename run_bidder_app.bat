@@ -1,7 +1,8 @@
 @echo off
 title Bidder Application
-:: Activate the virtual environment
-call venv\Scripts\activate
-:: Run the script
-python bidder_app/main_bidder.py
+:: Get the project root directory
+set "PROJECT_ROOT=%~dp0"
+cd /d "%PROJECT_ROOT%"
+:: Run the script using the local virtual environment's python directly
+"%PROJECT_ROOT%venv\Scripts\python.exe" bidder_app/main_bidder.py
 pause

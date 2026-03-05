@@ -46,5 +46,33 @@
             "nonce": "r6qXqt1tFZgQs/mD",
             "ciphertext": "DtctMkC7Ug7OEuMnwraCsu7Rd2dVShx/ER2XpdyYuqo4xGGTGm4ew+5/P1RPPEMTBOxyxglORqwMnAeaSHaWlCEfZnQm369euMRRxL/BQmTbt7RA6dMCWUzUkRe1wGkDCQ9ec2X/lImWqh76bYAOfbIsrZYTpyreZaUdojkU3T8BUW/ne/yrQcdjwghI7NozPv8lCMs8pg=="
         }
+    },
+    "124574": {
+        "data": {
+            "tender_id": "124574",
+            "title": "This is for new car for office ABC",
+            "description": "car need for office abc the car is the suv",
+            "deadline": "2026-12-12",
+            "officer_id": "OFF-OFFICER01"
+        },
+        "evaluators": [
+            "OFF-OFFICER02",
+            "OFF-OFFICER03"
+        ],
+        "officer_threshold": 2,
+        "data_hash": "1c4963050383ac82fcb84d3134a313fb2855a8da76c311cefa949a452ebaa956",
+        "signature": "3046022100f1bbff2471bdfde587e77d55a09a34959b0e603d5a00d6ae6db211b4cceff362022100e6f7a403319fe1068a2217ceb39898a252e563985f8897bfa77b9045dc4074a7",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAEIgzPB6vTOl3FVgbriQczZdLbVXPhuADE\nP1/B6Kgu62sHDBYYMA8v9bOwvW1WRCjKnQjdwW5e/x5NCx0EFAIPFQ==\n-----END PUBLIC KEY-----\n",
+        "officer_pub_key": "-----BEGIN PUBLIC KEY-----\nMFYwEAYHKoZIzj0CAQYFK4EEAAoDQgAE6rs8SNYPlgUUosADCNfgkriUC5cgFGn9/uEuVOUdqAlE\nDHZetJYVC1jDIzMb/DHu/8DC5qhEjvE13Nvd/tE8BQ==\n-----END PUBLIC KEY-----\n",
+        "status": "CLOSED",
+        "bidder_count": 1,
+        "wrapped_tender_key": {
+            "nonce": "xflMe7Zk7oUP99l8",
+            "ciphertext": "PubHKPrVoyuBX15mkcT4L9/wwnRmIjHm1gys9kx2z75qh4OYkstY+q99fVH+Pu4v01QzU2VgBkr29V/5wH1TzhcQ39J7uEiXQaUSfSKVFhgkPGGI+O3K8kNB6n/Cad4h0EuLoJyd7Pw3LiDtZpo7WOBibb9WGA0ZfJe1N37yKXP3kScO29d0UVJpwN6GejBERJd8bhaAOQ=="
+        },
+        "winner": {
+            "bidder_id": "Unknown",
+            "amount": 50000.0
+        }
     }
 }

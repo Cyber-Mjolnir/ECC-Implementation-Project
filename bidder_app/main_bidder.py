@@ -127,6 +127,7 @@ def bidder_dashboard(public_id, session_password):
             choices=[
                 '🆕 Submit Secure Bid',
                 '📜 View Bid History',
+                '⛓️ Verify Blockchain Integrity',
                 '🔓 Release Decryption Consensus',
                 '🔑 Manage ECC Keys',
                 '🚪 Secure Logout'
@@ -168,8 +169,70 @@ def bidder_dashboard(public_id, session_password):
         elif choice == '📜 View Bid History':
             view_bid_history(public_id, indent)
 
+        elif choice == '⛓️ Verify Blockchain Integrity':
+            verify_ledger_integrity(indent)
+
         elif choice == '🔓 Release Decryption Consensus':
             release_consensus_shares(public_id, session_password, indent)
+
+def verify_ledger_integrity(indent):
+    ui.clear_console()
+    ui.center_print("⛓️ BLOCKCHAIN LEDGER AUDIT")
+    ui.center_print("="*45)
+
+    print(f"\n{indent}[*] Fetching Public Ledger from Server...")
+    req = {"role": "bidder", "action": "fetch_ledger"}
+    res = network.send_request_raw(req)
+
+    if res.get("status") != "success":
+        print(f"\n{indent}❌ Error: {res.get('message')}")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    chain = res.get("chain", [])
+    if not chain:
+        print(f"\n{indent}[!] The blockchain is currently empty.")
+        input(f"\n{indent}Press Enter...")
+        return
+
+    print(f"{indent}[*] Auditing {len(chain)} blocks...")
+    import hashlib
+    
+    is_valid = True
+    last_known_hash = "GENESIS_HASH_0000000000000000000"
+    
+    print(f"\n{indent}{'INDEX':<6} | {'BLOCK HASH (Prefix)':<20} | {'LINKAGE'}")
+    print(f"{indent}{'-'*6}-+-{'-'*20}-+-{'-'*10}")
+
+    for i, block_wrapper in enumerate(chain):
+        block = block_wrapper["block"]
+        actual_hash = block_wrapper["hash"]
+        prev_hash_in_block = block.get("prev_hash")
+        
+        # Verify block hash hasn't changed (re-calculate)
+        block_json = json.dumps(block, sort_keys=True)
+        recalculated_hash = hashlib.sha256(block_json.encode()).hexdigest()
+        
+        link_status = "✅ OK"
+        if prev_hash_in_block != last_known_hash or recalculated_hash != actual_hash:
+            link_status = "❌ BROKEN"
+            is_valid = False
+            
+        print(f"{indent}{i:<6} | {actual_hash[:18]}... | {link_status}")
+        
+        if not is_valid:
+            print(f"\n{indent}[SECURITY ALERT] Blockchain tampered with at block {i}!")
+            break
+            
+        last_known_hash = actual_hash
+
+    if is_valid:
+        print(f"\n{indent}✅ AUDIT COMPLETE: All blocks are cryptographically linked.")
+        print(f"{indent}The ledger is immutable and consistent.")
+    else:
+        print(f"\n{indent}❌ AUDIT FAILED: The ledger has been compromised!")
+
+    input(f"\n{indent}Press Enter to return...")
 
 def release_consensus_shares(public_id, session_password, indent):
     ui.clear_console()
@@ -271,8 +334,15 @@ def submit_secure_bid(public_id, session_password, indent):
         input(f"\n{indent}Press Enter to return...")
         return
         
-    tenders = res["tenders"]
-    choices = [f"ID: {tid} | {tdata['data']['title']} (Ends: {tdata['data']['deadline']})" for tid, tdata in tenders.items()]
+    # Filter for OPEN tenders
+    open_tenders = {tid: tdata for tid, tdata in res["tenders"].items() if tdata.get("status") == "OPEN"}
+    
+    if not open_tenders:
+        print(f"{indent}[!] No open tenders available right now.")
+        input(f"\n{indent}Press Enter to return...")
+        return
+
+    choices = [f"ID: {tid} | {tdata['data']['title']} (Ends: {tdata['data']['deadline']})" for tid, tdata in open_tenders.items()]
     choices.append("❌ Cancel")
     
     selected = questionary.select(
@@ -285,7 +355,7 @@ def submit_secure_bid(public_id, session_password, indent):
         return
         
     tender_id = selected.split(" |")[0].replace("ID: ", "").strip()
-    target_tender = tenders[tender_id]
+    target_tender = open_tenders[tender_id]
     officer_pub_key = target_tender["public_key"]
     
     # Range parameters (hardcoded for prototype, usually provided in tender data)
